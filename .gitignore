@@ -1,0 +1,8 @@
+*.o
+*.a
+*.out
+ft_malcolm
+obj/
+libft/*.o
+libft/libft.a
+.vscode/

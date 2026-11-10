@@ -1,5 +1,28 @@
+/*
+** ============================================================================
+** MACRO DEFINITIONS & DOCUMENTATION
+** ============================================================================
+** IFNAMSIZ: System constant for max network interface name length.
+** AF_INET: Address family for IPv4 protocol.
+** IFF_UP: Interface is operationally up.
+** IFF_RUNNING: Resources are allocated for the interface.
+** IFF_LOOPBACK: Interface is a loopback device.
+** IFF_NOARP: Interface does not support ARP.
+** SOCK_RAW: Socket type for raw access to protocol packets.
+** ETH_P_ARP: Protocol type for ARP packets (Ethernet).
+** SOL_SOCKET: Socket level for setsockopt.
+** SO_RCVTIMEO: Timeout option for socket receive calls.
+*/
+
 #include "ft_malcolm.h"
 
+/**
+ * is_matching_subnet - Determines if the interface is on the same subnet as the target.
+ * @addr: Pointer to interface address.
+ * @netmask: Pointer to interface netmask.
+ * @tgt_ip: Target IPv4 to check.
+ * @return: 1 if matches, 0 otherwise.
+ */
 static int	is_matching_subnet(struct sockaddr *addr, struct sockaddr *netmask,
 	const uint8_t tgt_ip[IP4_ALEN])
 {
@@ -19,6 +42,11 @@ static int	is_matching_subnet(struct sockaddr *addr, struct sockaddr *netmask,
 	return ((interface_ip & mask) == (target & mask));
 }
 
+/**
+ * find_active_interface - Locates a broadcast-capable network interface.
+ * @ctx: Context structure to store ifname and ifindex.
+ * @return: 0 on success, -1 on failure.
+ */
 int	find_active_interface(t_malcolm_ctx *ctx)
 {
 	struct ifaddrs	*ifaddr;
@@ -66,6 +94,11 @@ int	find_active_interface(t_malcolm_ctx *ctx)
 	return (0);
 }
 
+/**
+ * open_arp_socket - Creates and configures a raw ARP socket.
+ * @ctx: Context structure to store sockfd.
+ * @return: 0 on success, -1 on failure.
+ */
 int	open_arp_socket(t_malcolm_ctx *ctx)
 {
 	struct timeval	tv;
@@ -76,7 +109,6 @@ int	open_arp_socket(t_malcolm_ctx *ctx)
 		fprintf(stderr, "ft_malcolm: socket error: %s\n", strerror(errno));
 		return (-1);
 	}
-	/* Timeout of 500ms so recvfrom can react promptly to SIGINT */
 	tv.tv_sec = 0;
 	tv.tv_usec = 500000;
 	if (setsockopt(ctx->sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)

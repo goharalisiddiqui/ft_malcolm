@@ -1,5 +1,24 @@
+/*
+** ============================================================================
+** MACRO DEFINITIONS & DOCUMENTATION
+** ============================================================================
+** ETHERTYPE_ARP: Hex constant 0x0806, identifying ARP protocol.
+** ETHERTYPE_IP: Hex constant 0x0800, identifying IPv4.
+** ARPHRD_ETHER: Hardware type 1 (Ethernet).
+** ARPOP_REQUEST: ARP opcode 1 (Request).
+** ETH_ALEN: Ethernet address length (6 bytes).
+** IP4_ALEN: IPv4 address length (4 bytes).
+** TOTAL_PACKET_LEN: Combined length of Ethernet and ARP headers.
+*/
+
 #include "ft_malcolm.h"
 
+/**
+ * is_matching_request - Validates if an incoming packet is the target ARP request.
+ * @pkt: Pointer to the parsed ARP packet.
+ * @ctx: Context structure for configuration.
+ * @return: 1 if matches, 0 otherwise.
+ */
 static int	is_matching_request(const t_arp_packet *pkt, const t_malcolm_ctx *ctx)
 {
 	if (ntohs(pkt->eth.proto) != ETHERTYPE_ARP)
@@ -19,6 +38,11 @@ static int	is_matching_request(const t_arp_packet *pkt, const t_malcolm_ctx *ctx
 	return (1);
 }
 
+/**
+ * listen_and_spoof - Sniffing loop for intercepting target ARP requests.
+ * @ctx: Context structure for configuration.
+ * @return: 0 on success, -1 on failure.
+ */
 int	listen_and_spoof(t_malcolm_ctx *ctx)
 {
 	uint8_t				buffer[2048];

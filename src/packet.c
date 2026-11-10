@@ -1,5 +1,25 @@
+/*
+** ============================================================================
+** MACRO DEFINITIONS & DOCUMENTATION
+** ============================================================================
+** TOTAL_PACKET_LEN: Combined length of Ethernet and ARP headers.
+** ETHERTYPE_ARP: Hex constant 0x0806, identifying ARP protocol.
+** ETHERTYPE_IP: Hex constant 0x0800, identifying IPv4.
+** ARPHRD_ETHER: Hardware type 1 (Ethernet).
+** ARPOP_REQUEST: ARP opcode 1 (Request).
+** ARPOP_REPLY: ARP opcode 2 (Reply).
+** ETH_ALEN: Ethernet address length (6 bytes).
+** IP4_ALEN: IPv4 address length (4 bytes).
+** AF_PACKET: Low-level packet interface address family.
+*/
+
 #include "ft_malcolm.h"
 
+/**
+ * print_packet_verbose - Prints dissected packet fields (Bonus).
+ * @buffer: The packet buffer.
+ * @len: Packet length.
+ */
 void	print_packet_verbose(const uint8_t *buffer, size_t len)
 {
 	const t_arp_packet	*pkt;
@@ -32,6 +52,11 @@ void	print_packet_verbose(const uint8_t *buffer, size_t len)
 	printf("----------------------\n");
 }
 
+/**
+ * send_arp_reply - Crafts and sends a spoofed ARP reply.
+ * @ctx: The application context containing configuration.
+ * @return: 0 on success, -1 on failure.
+ */
 int	send_arp_reply(t_malcolm_ctx *ctx)
 {
 	t_arp_packet		packet;

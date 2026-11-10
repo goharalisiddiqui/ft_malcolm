@@ -1,5 +1,18 @@
+/*
+** ============================================================================
+** MACRO DEFINITIONS & DOCUMENTATION
+** ============================================================================
+** IFNAMSIZ: System constant for max network interface name length.
+** INET_ADDRSTRLEN: Standard length for IPv4 string representation.
+*/
+
 #include "ft_malcolm.h"
 
+/**
+ * print_usage - Prints the program usage instructions.
+ * @prog: The program name (argv[0]).
+ * @bonus_mode: Boolean indicating if bonus flags are enabled.
+ */
 static void	print_usage(const char *prog, int bonus_mode)
 {
 	if (bonus_mode)
@@ -8,6 +21,14 @@ static void	print_usage(const char *prog, int bonus_mode)
 		fprintf(stderr, "Usage: %s <source ip> <source mac> <target ip> <target mac>\n", prog);
 }
 
+/**
+ * parse_cli_args - Parses and validates command line arguments.
+ * @argc: Argument count.
+ * @argv: Argument vector.
+ * @ctx: Context structure.
+ * @args: Parsed positional arguments.
+ * @return: 0 on success, -1 on failure.
+ */
 static int	parse_cli_args(int argc, char **argv, t_malcolm_ctx *ctx, char **args)
 {
 	int	pos;
@@ -39,6 +60,12 @@ static int	parse_cli_args(int argc, char **argv, t_malcolm_ctx *ctx, char **args
 	return (0);
 }
 
+/**
+ * main - Entry point for ft_malcolm.
+ * @argc: Number of arguments.
+ * @argv: Array of argument strings.
+ * @return: 0 on success, 1 on failure.
+ */
 int	main(int argc, char **argv)
 {
 	t_malcolm_ctx	ctx;
@@ -58,7 +85,6 @@ int	main(int argc, char **argv)
 		return (1);
 	}
 
-	/* Validate arguments in sequence matching 42 subject tests */
 	if (parse_ip(args[0], ctx.src_ip, ctx.bonus_mode) != 0)
 	{
 		fprintf(stderr, "ft_malcolm: unknown host or invalid IP address: (%s).\n", args[0]);

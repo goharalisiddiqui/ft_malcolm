@@ -95,9 +95,7 @@ run_cmd ip link set dev "$IF_SERVER" up
 # Enable loopback
 run_cmd ip link set dev lo up
 
-# Enable proxy ARP and accept_local so the kernel replies between virtual endpoints
-# in the same namespace during Part 1
-run_cmd sysctl -w net.ipv4.conf."$IF_SERVER".proxy_arp=1 >/dev/null 2>&1 || true
+# Enable cross-endpoint communication in virtual namespace
 run_cmd sysctl -w net.ipv4.conf."$IF_SERVER".accept_local=1 >/dev/null 2>&1 || true
 run_cmd sysctl -w net.ipv4.conf."$IF_TARGET".accept_local=1 >/dev/null 2>&1 || true
 echo ""
@@ -110,14 +108,7 @@ echo -e "${YELLOW} PART 1: Standard Resolution Without ft_malcolm               
 echo -e "${YELLOW}======================================================================${NC}"
 echo -e "Client (${TARGET_IP}) resolves Server (${SERVER_IP}) normally over the wire:\n"
 
-# Trigger ARP request and wait briefly for reply
-run_cmd arping -c 1 -I "$IF_TARGET" "$SERVER_IP" >/dev/null 2>&1 || \
 run_cmd ping -c 1 -W 1 -I "$IF_TARGET" "$SERVER_IP" >/dev/null 2>&1 || true
-
-# If proxy_arp in same-stack didn't populate, generate an ARP reply from server endpoint
-if ! ip neigh show dev "$IF_TARGET" | grep -q "$SERVER_GENUINE_MAC"; then
-    arping -c 1 -A -I "$IF_SERVER" "$SERVER_IP" >/dev/null 2>&1 || true
-fi
 
 echo -e "\n${CYAN}Client ARP cache after legitimate resolution:${NC}"
 run_cmd ip neigh show dev "$IF_TARGET"
@@ -130,16 +121,19 @@ echo -e "${CYAN}Client ARP cache after flush:${NC}"
 run_cmd ip neigh show dev "$IF_TARGET" || true
 echo "(Cache is empty)\n"
 
-# Disable proxy ARP so only ft_malcolm replies in Part 2
-sysctl -w net.ipv4.conf."$IF_SERVER".proxy_arp=0 >/dev/null 2>&1 || true
-
 # ------------------------------------------------------------------------------
 # PART 2: Resolution With ft_malcolm Active
 # ------------------------------------------------------------------------------
 echo -e "${YELLOW}======================================================================${NC}"
 echo -e "${YELLOW} PART 2: Resolution With ft_malcolm Active                            ${NC}"
 echo -e "${YELLOW}======================================================================${NC}"
-echo -e "Starting ft_malcolm to intercept requests for ${SERVER_IP} from ${TARGET_IP}...\n"
+echo -e "Disabling kernel auto-reply on server interface so only ft_malcolm responds..."
+# arp_ignore=8 tells the Linux kernel: do not automatically answer ARP requests for local IPs.
+# ft_malcolm (raw socket AF_PACKET) still intercepts and crafts the response.
+run_cmd sysctl -w net.ipv4.conf."$IF_SERVER".arp_ignore=8 >/dev/null 2>&1 || true
+run_cmd sysctl -w net.ipv4.conf.all.arp_ignore=8 >/dev/null 2>&1 || true
+
+echo -e "\nStarting ft_malcolm to intercept requests for ${SERVER_IP} from ${TARGET_IP}...\n"
 
 # Launch ft_malcolm in background
 run_cmd ./ft_malcolm "$SERVER_IP" "$SPOOFED_MAC" "$TARGET_IP" "$TARGET_MAC" &
@@ -148,7 +142,6 @@ MALCOLM_PID=$!
 sleep 1
 
 echo -e "\n${CYAN}Triggering client broadcast request for ${SERVER_IP}...${NC}"
-run_cmd arping -c 1 -I "$IF_TARGET" "$SERVER_IP" >/dev/null 2>&1 || \
 run_cmd ping -c 1 -W 1 -I "$IF_TARGET" "$SERVER_IP" >/dev/null 2>&1 || true
 
 # Wait for ft_malcolm to complete its reply cycle and exit
